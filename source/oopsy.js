@@ -40,13 +40,13 @@ const help = `
 cmds: 	up/upload = (default) generate & upload
 	  	gen/generate = generate only
 
-target: path to a JSON for the hardware config, 
-		or simply "patch", "field", "petal", "pod" etc. 
+target: path to a JSON for the hardware config,
+		or simply "patch", "field", "petal", "pod" etc.
 		Defaults to "patch"
 
 cpps: 	paths to the gen~ exported cpp files
 		first item will be the default app
-		  
+
 watch:	script will not terminate
 		actions will be re-run each time any of the cpp files are modified
 `
@@ -85,14 +85,15 @@ function run() {
 			case "pod":
 			case "field":
 			case "petal":
-			case "patch": 
+			case "terrarium":
+			case "patch":
 			case "versio": {target = arg;} break;
 			case "watch": watch=true; break;
-			case "96": 
+			case "96":
 			case "96kHz": samplerate = 96; break;
-			case "48": 
+			case "48":
 			case "48kHz": samplerate = 48; break;
-			case "32": 
+			case "32":
 			case "32kHz": samplerate = 32; break;
 
 			default: {
@@ -101,10 +102,10 @@ function run() {
 					if (fs.lstatSync(arg).isDirectory()) {
 						// add a whole folder full of cpps:
 						cpps = cpps.concat(fs.readdirSync(arg)
-							.filter(s => path.parse(s).ext == ".cpp") 
+							.filter(s => path.parse(s).ext == ".cpp")
 							.map(s => path.join(arg, s))
 						)
-					} else {	
+					} else {
 						let p = path.parse(arg);
 						switch(p.ext) {
 							case ".json": {target_path = arg; target = ""}; break;
@@ -168,7 +169,7 @@ function run() {
 		hardware: hardware,
 		apps: apps,
 	}
-	
+
 	// add watcher
 	if (watch && watchers.length < 1) {
 		watchers = cpps.map(cpp_path => fs.watch(cpp_path, (event, filepath)=>{
@@ -239,7 +240,7 @@ int main(void) {
 	return oopsy::daisy.run(appdefs, ${apps.length}, daisy::SaiHandle::Config::SampleRate::SAI_${samplerate}KHZ);
 }
 `
-	fs.writeFileSync(maincpp_path, cppcode, "utf-8");	
+	fs.writeFileSync(maincpp_path, cppcode, "utf-8");
 
 	console.log("oopsy generated code")
 
@@ -269,9 +270,9 @@ int main(void) {
 		}
 		// if successful, try to upload to hardware:
 		if (fs.existsSync(bin_path) && action=="upload") {
-			
+
 			console.log("oopsy flashing...")
-			
+
 			if (os.platform() == "win32") {
 				console.log(execSync("set PATH=%PATH%;/usr/local/bin && make program-dfu", { cwd: build_path }).toString())
 			} else {
@@ -306,7 +307,7 @@ function analyze_cpp(cpp) {
 			cname: null,
 		}
 		if (type == "GENLIB_PARAMTYPE_FLOAT") {
-			param.cname = /pi->defaultvalue\s+=\s+self->([^;]+)/gm.exec(s)[1]; 
+			param.cname = /pi->defaultvalue\s+=\s+self->([^;]+)/gm.exec(s)[1];
 			param.min = +(/pi->outputmin\s+=\s+([^;]+)/gm.exec(s)[1])
 			param.max = +(/pi->outputmax\s+=\s+([^;]+)/gm.exec(s)[1])
 			//param.default = +new RegExp(`\\s${param.cname}\\s+=\\s+\\(\\(\\w+\\)([^\\)]+)`, "gm").exec(cpp)[1]
@@ -455,7 +456,7 @@ function generate_app(app, hardware, target, defines) {
 			}
 			app.audio_outs.push(src);
 		}
-		
+
 		let node = {
 			name: name,
 			// label: label,
@@ -522,7 +523,7 @@ function generate_app(app, hardware, target, defines) {
 		} else if (map) {
 			label = maplabel
 		} else {
-			// else it is audio data			
+			// else it is audio data
 			nodes[src].src = src;
 		}
 		nodes[name].label = label
@@ -546,7 +547,7 @@ function generate_app(app, hardware, target, defines) {
 				label = match[1] || param.name
 			}
 		})
-		
+
 		let node = Object.assign({
 			varname: varname,
 			label: label || param.name,
@@ -569,7 +570,7 @@ function generate_app(app, hardware, target, defines) {
 				let power = Math.round(Math.log2(node.range / ideal_steps))
 				node.stepsize = Math.pow(2, power)
 			}
-		} 
+		}
 		if (!node.stepsize) {
 			// general case:
 			node.stepsize = node.range / ideal_steps
@@ -672,7 +673,7 @@ struct App_${name} : public oopsy::App<App_${name}> {
 	float ${name};`).join("")}
 	${app.audio_outs.map(name=>`
 	float ${name}[OOPSY_BUFFER_SIZE];`).join("")}
-	
+
 	void init(oopsy::GenDaisy& daisy) {
 		daisy.gen = ${name}::create(daisy.samplerate, daisy.blocksize);
 		${name}::State& gen = *(${name}::State *)daisy.gen;
@@ -741,7 +742,7 @@ struct App_${name} : public oopsy::App<App_${name}> {
 		${app.has_midi_in ? daisy.midi_ins.map(name=>`
 		float * ${name} = daisy.midi_in_data;`).join("") : ''}
 		// ${gen.audio_ins.map(name=>nodes[name].label).join(", ")}:
-		float * inputs[] = { ${gen.audio_ins.map(name=>nodes[name].src).join(", ")} }; 
+		float * inputs[] = { ${gen.audio_ins.map(name=>nodes[name].src).join(", ")} };
 		// ${gen.audio_outs.map(name=>nodes[name].label).join(", ")}:
 		float * outputs[] = { ${gen.audio_outs.map(name=>nodes[name].src).join(", ")} };
 		gen.perform(inputs, outputs, size);
@@ -760,9 +761,9 @@ struct App_${name} : public oopsy::App<App_${name}> {
 			.filter(node => node.data)
 			.map(node =>`
 		${interpolate(node.setter, node)};`).join("")}
-		${(function() { 
+		${(function() {
 		let midisetters = gen.audio_outs.map(name=>nodes[name]).filter(node=>node.midi_setter);
-		return `${midisetters.length > 0 ? 
+		return `${midisetters.length > 0 ?
 		`if (daisy.frames % ${Math.ceil(midisetters.length*hardware.samplerate/32)} == 0){ // throttle output for MIDI baud limits
 				${midisetters.map(node=>`
 		${node.midi_setter};`).join(``)}
@@ -774,7 +775,7 @@ struct App_${name} : public oopsy::App<App_${name}> {
 			.map(node=>node.src ? `
 		memcpy(${node.name}, ${node.src}, sizeof(float)*size);` : `
 		memset(${node.name}, 0, sizeof(float)*size);`).join("")}
-	}	
+	}
 
 	${defines.OOPSY_HAS_PARAM_VIEW ? `
 	float setparam(int idx, float val) {
@@ -782,7 +783,7 @@ struct App_${name} : public oopsy::App<App_${name}> {
 			${gen.params.map(name=>nodes[name]).map((node, i)=>`
 			case ${i}: return ${node.varname} = (val > ${toCfloat(node.max)}) ? ${toCfloat(node.max)} : (val < ${toCfloat(node.min)}) ? ${toCfloat(node.min)} : val;`).join("")}
 		}
-		return 0.f;	
+		return 0.f;
 	}
 
 	#ifdef OOPSY_TARGET_HAS_OLED
@@ -790,13 +791,13 @@ struct App_${name} : public oopsy::App<App_${name}> {
 		switch(idx) { ${gen.params.map(name=>nodes[name]).map((node, i)=>`
 		case ${i}:
 		if (tweak) setparam(${i}, ${node.varname} + daisy.menu_button_incr * ${toCfloat(node.stepsize)});
-		snprintf(label, len, "${node.src ? 
-			`${node.src.substring(0,3).padEnd(3," ")} ${node.label.substring(0,11).padEnd(11," ")}" FLT_FMT3 ""` 
-			: 
+		snprintf(label, len, "${node.src ?
+			`${node.src.substring(0,3).padEnd(3," ")} ${node.label.substring(0,11).padEnd(11," ")}" FLT_FMT3 ""`
+			:
 			`%s ${node.label.substring(0,11).padEnd(11," ")}" FLT_FMT3 "", (daisy.param_is_tweaking && ${i} == daisy.param_selected) ? "enc" : "   "`
-			}, FLT_VAR3(${node.varname}) ); 
+			}, FLT_VAR3(${node.varname}) );
 		break;`).join("")}
-		}	
+		}
 	}
 	#endif
 	` : ``}
