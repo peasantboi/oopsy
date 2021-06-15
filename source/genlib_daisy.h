@@ -37,7 +37,12 @@
 	#define OOPSY_IO_COUNT (2)
 	typedef daisy::DaisyVersio Daisy;
 
-#else 
+#elif defined(OOPSY_TARGET_TERRARIUM)
+	#include "daisy_terrarium.h"
+	#define OOPSY_IO_COUNT (2)
+	typedef daisy::DaisyTerrarium Daisy;
+
+#else
 	#include "daisy_seed.h"
 	#define OOPSY_IO_COUNT (2)
 	typedef daisy::DaisySeed Daisy;
@@ -51,7 +56,7 @@
 #define OOPSY_LONG_PRESS_MS 250
 #define OOPSY_DISPLAY_PERIOD_MS 10
 #define OOPSY_SCOPE_MAX_ZOOM (8)
-static const uint32_t OOPSY_SRAM_SIZE = 512 * 1024; 
+static const uint32_t OOPSY_SRAM_SIZE = 512 * 1024;
 static const uint32_t OOPSY_SDRAM_SIZE = 64 * 1024 * 1024;
 
 namespace oopsy {
@@ -82,7 +87,7 @@ namespace oopsy {
 			return p;
 		}
 		return nullptr;
-	}	
+	}
 
 	void memset(void *p, int c, long size) {
 		char *p2 = (char *)p;
@@ -115,7 +120,7 @@ namespace oopsy {
 	// }
 
 	struct Timer {
-		int32_t period = OOPSY_DISPLAY_PERIOD_MS, 
+		int32_t period = OOPSY_DISPLAY_PERIOD_MS,
 				t = OOPSY_DISPLAY_PERIOD_MS;
 
 		bool ready(int32_t dt) {
@@ -167,7 +172,7 @@ namespace oopsy {
 		Timer uitimer;
 
 		// microseconds spent in audio callback
-		float audioCpuUs = 0; 
+		float audioCpuUs = 0;
 
 		float samplerate; // default 48014
 		size_t blocksize; // default 48
@@ -180,7 +185,7 @@ namespace oopsy {
 		void * app = nullptr;
 		void * gen = nullptr;
 		bool nullAudioCallbackRunning = false;
-		
+
 		#ifdef OOPSY_TARGET_HAS_OLED
 
 		enum {
@@ -197,10 +202,10 @@ namespace oopsy {
 			SCOPEOPTION_ZOOM,
 			SCOPEOPTION_COUNT
 		} ScopeOptions;
-		
+
 		FontDef& font = Font_6x8;
-		uint_fast8_t scope_zoom = 7; 
-		uint_fast8_t scope_step = 0; 
+		uint_fast8_t scope_zoom = 7;
+		uint_fast8_t scope_step = 0;
 		uint_fast8_t scope_option = 0, scope_style = SCOPESTYLE_TOPBOTTOM, scope_source = OOPSY_IO_COUNT/2;
 		uint16_t console_cols, console_rows, console_line;
 		char * console_stats;
@@ -257,23 +262,23 @@ namespace oopsy {
 		int run(AppDef * appdefs, int count, daisy::SaiHandle::Config::SampleRate SR) {
 			this->appdefs = appdefs;
 			app_count = count;
-			
+
 			mode_default = (Mode)(MODE_COUNT-1);
 			mode = mode_default;
 
-			hardware.Init(); 
+			hardware.Init();
 			hardware.seed.SetAudioSampleRate(SR);
-			samplerate = hardware.seed.AudioSampleRate(); 
+			samplerate = hardware.seed.AudioSampleRate();
 			blocksize = hardware.seed.AudioBlockSize();  // default 48
 
 			#ifdef OOPSY_USE_LOGGING
 			hardware.seed.StartLog(true);
 			//daisy::Logger<daisy::LOGGER_INTERNAL>::StartLog(false);
 			#endif
-			
+
 			#ifdef OOPSY_TARGET_HAS_OLED
 			console_cols = SSD1309_WIDTH / font.FontWidth + 1; // +1 to accommodate null terminators.
-			console_rows = SSD1309_HEIGHT / font.FontHeight; 
+			console_rows = SSD1309_HEIGHT / font.FontHeight;
 			console_memory = (char *)calloc(console_cols, console_rows);
 			console_stats = (char *)calloc(console_cols, 1);
 			for (int i=0; i<console_rows; i++) {
@@ -291,7 +296,7 @@ namespace oopsy {
 			midi_data_idx = 0;
 			midi_in_written = 0, midi_out_written = 0;
 			midi_in_active = 0, midi_out_active = 0;
-			uart.Init(); 
+			uart.Init();
 			uart.StartRx();
 			#endif
 
@@ -300,7 +305,7 @@ namespace oopsy {
 
 			#ifdef OOPSY_TARGET_HAS_OLED
 			console_display();
-			#endif 
+			#endif
 
 			static bool blink;
 			while(1) {
@@ -310,7 +315,7 @@ namespace oopsy {
 
 				// pulse seed LED for status according to CPU usage:
 				hardware.seed.SetLed((t % 1000)/10 <= uint32_t(0.0001f*audioCpuUs*samplerate/blocksize));
-				
+
 				// handle app-level code (e.g. for CV/gate outs)
 				mainloopCallback(t, dt);
 				#ifdef OOPSY_TARGET_USES_MIDI_UART
@@ -358,7 +363,7 @@ namespace oopsy {
 					}
 				}
 				#endif
-				
+
 				if (uitimer.ready(dt)) {
 					#ifdef OOPSY_USE_LOGGING
 					//hardware.seed.PrintLine("helo %d", t);
@@ -374,11 +379,11 @@ namespace oopsy {
 					#ifdef OOPSY_TARGET_HAS_OLED
 					hardware.display.Fill(false);
 					#endif
-					#ifdef OOPSY_TARGET_PETAL 
+					#if (OOPSY_TARGET_PETAL || OOPSY_TARGET_TERRARIUM)
 					hardware.ClearLeds();
-					#endif
-				
-					#ifdef OOPSY_TARGET_PETAL 
+					#endif // (OOPSY_TARGET_PETAL || OOPSY_TARGET_TERRARIUM)
+
+					#ifdef OOPSY_TARGET_PETAL
 					// has no mode selection
 					is_mode_selecting = 0;
 					#if defined(OOPSY_MULTI_APP)
@@ -387,7 +392,7 @@ namespace oopsy {
 					#endif
 					for(int i = 0; i < 8; i++) {
 						float white = (i == app_selecting || menu_button_released);
-						hardware.SetRingLed((daisy::DaisyPetal::RingLed)i, 
+						hardware.SetRingLed((daisy::DaisyPetal::RingLed)i,
 							(i == app_selected || white) * 1.f,
 							white * 1.f,
 							(i < app_count) * 0.3f + white * 1.f
@@ -404,7 +409,7 @@ namespace oopsy {
 					#endif
 					for(int i = 0; i < 4; i++) {
 						float white = (i == app_selecting || menu_button_released);
-						hardware.SetLed(i, 
+						hardware.SetLed(i,
 							(i == app_selected || white) * 1.f,
 							white * 1.f,
 							(i < app_count) * 0.3f + white * 1.f
@@ -416,7 +421,7 @@ namespace oopsy {
 					if (is_mode_selecting) {
 						mode += menu_button_incr;
 						if (mode >= MODE_COUNT) mode = 0;
-						if (mode < 0) mode = MODE_COUNT-1;	
+						if (mode < 0) mode = MODE_COUNT-1;
 					#ifdef OOPSY_MULTI_APP
 					} else if (mode == MODE_MENU) {
 						#ifdef OOPSY_TARGET_VERSIO
@@ -446,12 +451,12 @@ namespace oopsy {
 							param_selected += menu_button_incr;
 							if (param_selected >= param_count) param_selected = 0;
 							if (param_selected < 0) param_selected = param_count-1;
-						} 
+						}
 					#endif //OOPSY_HAS_PARAM_VIEW
 					#endif //OOPSY_TARGET_HAS_OLED
 					}
 
-					// SHORT PRESS	
+					// SHORT PRESS
 					if (menu_button_released) {
 						menu_button_released = 0;
 						if (is_mode_selecting) {
@@ -476,7 +481,7 @@ namespace oopsy {
 						#endif //OOPSY_HAS_PARAM_VIEW
 						#endif //OOPSY_TARGET_HAS_OLED
 						}
-					} 
+					}
 
 					// OLED DISPLAY:
 					#ifdef OOPSY_TARGET_HAS_OLED
@@ -507,7 +512,7 @@ namespace oopsy {
 							for (int line=0; line<console_rows && idx < param_count; line++, idx++) {
 								paramCallback(idx, label, console_cols, param_is_tweaking && idx == param_selected);
 								hardware.display.SetCursor(0, font.FontHeight * line);
-								hardware.display.WriteString(label, font, (param_selected != idx));	
+								hardware.display.WriteString(label, font, (param_selected != idx));
 							}
 						} break;
 						#endif // OOPSY_HAS_PARAM_VIEW
@@ -603,10 +608,10 @@ namespace oopsy {
 								// for view style, just leave it blank :-)
 							}
 						} break;
-						case MODE_CONSOLE: 
+						case MODE_CONSOLE:
 						{
 							showstats = 1;
-							console_display(); 
+							console_display();
 							break;
 						}
 						default: {
@@ -614,7 +619,7 @@ namespace oopsy {
 					}
 					if (is_mode_selecting) {
 						hardware.display.DrawRect(0, 0, SSD1309_WIDTH-1, SSD1309_HEIGHT-1, 1);
-					} 
+					}
 					if (showstats) {
 						int offset = 0;
 						#ifdef OOPSY_TARGET_USES_MIDI_UART
@@ -629,20 +634,20 @@ namespace oopsy {
 					#endif //OOPSY_TARGET_HAS_OLED
 
 					menu_button_incr = 0;
-					
+
 					// handle app-level code (e.g. for LED etc.)
 					displayCallback(t, dt);
 
 					#ifdef OOPSY_TARGET_HAS_OLED
 					hardware.display.Update();
 					#endif //OOPSY_TARGET_HAS_OLED
-					#if (OOPSY_TARGET_PETAL || OOPSY_TARGET_VERSIO)
+					#if (OOPSY_TARGET_PETAL || OOPSY_TARGET_VERSIO || OOPSY_TARGET_TERRARIUM)
 					hardware.UpdateLeds();
-					#endif //(OOPSY_TARGET_PETAL || OOPSY_TARGET_VERSIO)
+					#endif //(OOPSY_TARGET_PETAL || OOPSY_TARGET_VERSIO || OOPSY_TARGET_TERRARIUM)
 
 
 				} // uitimer.ready
-				
+
 			}
 			return 0;
 		}
@@ -694,7 +699,7 @@ namespace oopsy {
 				// 01, 23, 45, 67  2n:2n+1  i1i2 i3i4 o1o2 o3o4
 				// 04, 15, 26, 37  n:n+ch   i1o1 i2o2 i3o3 i4o4
 				int n = scope_source % OOPSY_IO_COUNT;
-				float * buf0 = (scope_source < OOPSY_IO_COUNT) ? buffers[2*n  ] : buffers[n   ]; 
+				float * buf0 = (scope_source < OOPSY_IO_COUNT) ? buffers[2*n  ] : buffers[n   ];
 				float * buf1 = (scope_source < OOPSY_IO_COUNT) ? buffers[2*n+1] : buffers[n+OOPSY_IO_COUNT];
 
 				// float * buf0 = scope_source ? buffers[0] : buffers[2];
@@ -714,7 +719,7 @@ namespace oopsy {
 					scope_data[scope_step][0] = (min0);
 					scope_data[scope_step][1] = (min1);
 					scope_step++;
-					scope_data[scope_step][0] = (max0); 
+					scope_data[scope_step][0] = (max0);
 					scope_data[scope_step][1] = (max1);
 					scope_step++;
 					if (scope_step >= SSD1309_WIDTH*2) scope_step = 0;
@@ -813,7 +818,7 @@ namespace oopsy {
 		#endif
 
 		static void nullAudioCallback(float **hardware_ins, float **hardware_outs, size_t size);
-		
+
 		static void nullMainloopCallback(uint32_t t, uint32_t dt) {}
 	} daisy;
 
@@ -829,7 +834,7 @@ namespace oopsy {
 	// Curiously-recurring template to make App definitions simpler:
 	template<typename T>
 	struct App {
-		
+
 		static void staticMainloopCallback(uint32_t t, uint32_t dt) {
 			T& self = *(T *)daisy.app;
 			self.mainloopCallback(daisy, t, dt);
