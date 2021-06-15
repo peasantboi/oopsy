@@ -3,9 +3,6 @@ start_dir=$PWD
 
 echo $start_dir
 
-echo "get submodules"
-git submodule update --init --recursive
-
 echo "rebuilding everything. . . "
 echo "only errors, and warnings will output. . . "
 echo "-------------------"
