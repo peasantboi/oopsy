@@ -1,0 +1,110 @@
+{
+    "max_apps":8,
+	"defines": {
+		"OOPSY_TARGET_TERRARIUM": 1
+	},
+	"labels": {
+		"params": {
+			"knob1": "kn1",
+			"knob2": "kn2",
+			"knob3": "kn3",
+			"knob4": "kn4",
+			"knob5": "kn5",
+			"knob6": "kn6",
+			"sw1": "sw1",
+			"sw2": "sw2",
+			"sw3": "sw3",
+			"sw4": "sw4",
+			"sw5": "sw5",
+			"sw6": "sw6",
+
+			"ctrl1": "kn1",
+			"ctrl2": "kn2",
+			"ctrl3": "kn3",
+			"ctrl4": "kn4",
+			"ctrl5": "kn5",
+			"ctrl6": "kn6",
+			"switch1": "sw1",
+			"switch2": "sw2",
+			"switch3": "sw3",
+			"switch4": "sw4",
+			"switch": "sw1",
+			"knob": "kn1",
+			"ctrl": "kn1"
+		},
+		"outs": {
+			"led1": "led1",
+			"led2": "led2",
+			"led3": "led3",
+			"led4": "led4"
+		},
+		"datas": {}
+	},
+	"inputs": {
+		"kn1": {
+			"automap": true,
+        	"getter": "hardware.GetKnobValue(hardware.KNOB_1)"
+		},
+		"kn2": {
+			"automap": true,
+        	"getter": "hardware.GetKnobValue(hardware.KNOB_2)"
+		},
+		"kn3": {
+			"automap": true,
+        	"getter": "hardware.GetKnobValue(hardware.KNOB_3)"
+		},
+		"kn4": {
+			"automap": true,
+        	"getter": "hardware.GetKnobValue(hardware.KNOB_4)"
+		},
+		"kn5": {
+			"automap": true,
+        	"getter": "hardware.GetKnobValue(hardware.KNOB_5)"
+		},
+		"kn6": {
+			"automap": true,
+        	"getter": "hardware.GetKnobValue(hardware.KNOB_6)"
+		},
+		"sw1": {
+			"getter": "(hardware.switches[0].Pressed()?1.f:0.f)"
+		},
+		"sw2": {
+			"getter": "(hardware.switches[1].Pressed()?1.f:0.f)"
+		},
+		"sw3": {
+			"getter": "(hardware.switches[2].Pressed()?1.f:0.f)"
+		},
+		"sw4": {
+			"getter": "(hardware.switches[3].Pressed()?1.f:0.f)"
+		},
+		"sw5": {
+			"getter": "(hardware.switches[4].Pressed()?1.f:0.f)"
+		},
+		"sw6": {
+			"getter": "(hardware.switches[5].Pressed()?1.f:0.f)"
+		}
+		}
+	},
+	"outputs": {
+		"led1": {
+			"where": "display",
+			"setter": "hardware SetLed(daisy::DaisyTerrarium::FOOTSWITCH_LED_1, $<name>)"
+		},
+		"led2": {
+			"where": "display",
+			"setter": "hardware SetLed(daisy::DaisyTerrarium::FOOTSWITCH_LED_2, $<name>)"
+		}
+	},
+    "datahandlers": {
+	},
+	"audio_ins": [
+      "dsy_in1",
+      "dsy_in2"
+    ],
+    "audio_outs": [
+      "dsy_out1",
+      "dsy_out2"
+    ],
+    "midi_ins": [],
+    "midi_outs": []
+}
