@@ -34,9 +34,7 @@
 		},
 		"outs": {
 			"led1": "led1",
-			"led2": "led2",
-			"led3": "led3",
-			"led4": "led4"
+			"led2": "led2"
 		},
 		"datas": {}
 	},
@@ -83,16 +81,15 @@
 		"sw6": {
 			"getter": "(hardware.switches[5].Pressed()?1.f:0.f)"
 		}
-		}
 	},
 	"outputs": {
 		"led1": {
 			"where": "display",
-			"setter": "hardware SetLed(daisy::DaisyTerrarium::FOOTSWITCH_LED_1, $<name>)"
+			"setter": "hardware.SetFootswitchLed(daisy::DaisyTerrarium::FOOTSWITCH_LED_1, $<name>)"
 		},
 		"led2": {
 			"where": "display",
-			"setter": "hardware SetLed(daisy::DaisyTerrarium::FOOTSWITCH_LED_2, $<name>)"
+			"setter": "hardware.SetFootswitchLed(daisy::DaisyTerrarium::FOOTSWITCH_LED_2, $<name>)"
 		}
 	},
     "datahandlers": {

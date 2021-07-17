@@ -683,6 +683,8 @@ namespace oopsy {
 			// menu_button_incr += hardware.GetKnobValue(6) * app_count;
 			// menu_button_held_ms = hardware.tap_.TimeHeldMs();
 			// if (hardware.tap_.FallingEdge()) menu_button_released = 1;
+			#elif OOPSY_TARGET_TERRARIUM
+				/* Do nothing, no encuder exists */
 			#else
 			menu_button_held = hardware.encoder.Pressed();
 			menu_button_incr += hardware.encoder.Increment();
